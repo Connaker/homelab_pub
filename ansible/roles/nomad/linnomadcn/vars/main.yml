@@ -1,0 +1,6 @@
+---
+nomad_directories:
+    - /etc/nomad.d
+    - /opt/nomad
+    - /opt/nomad/volumes/test
+    - /var/log/nomad

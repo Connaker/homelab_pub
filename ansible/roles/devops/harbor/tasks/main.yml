@@ -1,0 +1,77 @@
+---
+- name: Ensure required directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ harbor_download_dir }}"
+    - "{{ harbor_config_dir }}"
+    - "{{ harbor_data_dir }}"
+
+- name: Download Harbor installer
+  get_url:
+    url: "https://github.com/goharbor/harbor/releases/download/v{{ harbor_version }}/harbor-offline-installer-v{{ harbor_version }}.tgz"
+    dest: "{{ harbor_download_dir }}/harbor-offline-installer-v{{ harbor_version }}.tgz"
+    mode: '0644'
+
+- name: Extract Harbor archive
+  unarchive:
+    src: "{{ harbor_download_dir }}/harbor-offline-installer-v{{ harbor_version }}.tgz"
+    dest: "{{ harbor_download_dir }}"
+    remote_src: yes
+    creates: "{{ harbor_download_dir }}/harbor"
+
+- name: Copy Harbor configuration template
+  copy:
+    src: "{{ harbor_download_dir }}/harbor/harbor.yml.tmpl"
+    dest: "{{ harbor_download_dir }}/harbor/harbor.yml"
+    mode: '0644'
+    remote_src: yes
+
+- name: Configure Harbor for HTTP
+  replace:
+    path: "{{ harbor_download_dir }}/harbor/harbor.yml"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: '^hostname: reg.mydomain.com', replace: 'hostname: {{ harbor_hostname }}' }
+    - { regexp: '^https:', replace: '#https:' }
+    - { regexp: '  port: 443', replace: '#  port: 443' }
+    - { regexp: '  certificate:', replace: '#  certificate:' }
+    - { regexp: '  private_key:', replace: '#  private_key:' }
+    - { regexp: '^# http:', replace: 'http:' }
+    - { regexp: '#  port: 80', replace: '  port: 80' }
+    - { regexp: '^harbor_admin_password: Harbor12345', replace: 'harbor_admin_password: {{ harbor_admin_password }}' }
+    - { regexp: '^data_volume: /data', replace: 'data_volume: {{ harbor_data_dir }}' }
+    - { regexp: 'password: root123', replace: 'password: {{ harbor_db_password }}' }
+
+- name: Ensure Harbor data directory exists
+  file:
+    path: "{{ harbor_data_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Run Harbor install script
+  command:
+    cmd: ./install.sh --with-trivy
+    chdir: "{{ harbor_download_dir }}/harbor"
+
+- name: Create templates directory
+  file:
+    path: "{{ playbook_dir }}/templates"
+    state: directory
+    mode: '0755'
+
+- name: Create Harbor systemd service
+  template:
+    src: harbor.service.j2
+    dest: /etc/systemd/system/harbor.service
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Enable and start Harbor service
+  systemd:
+    name: harbor
+    state: started
+    enabled: yes

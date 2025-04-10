@@ -1,0 +1,8 @@
+---
+harbor_version: "2.10.0"
+harbor_download_dir: "/opt/harbor"
+harbor_config_dir: "/etc/harbor"
+harbor_data_dir: "/data/harbor"
+harbor_hostname: "192.168.4.230"  # Change this to your domain
+harbor_admin_password: "{{ lookup('env', 'HARBOR_ADMIN_PASSWORD') }}"  # Set this in environment variables
+harbor_db_password: "{{ lookup('env', 'HARBOR_DB_PASSWORD') }}"  

@@ -1,0 +1,22 @@
+---
+- name: Update Cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+
+- name: Autoremove unnecessary packages
+  ansible.builtin.apt:
+    autoremove: yes
+
+- name: Autoclean obsolete packages
+  ansible.builtin.apt:
+    autoclean: yes
+
+- name: Install a list of packages
+  ansible.builtin.apt:
+    pkg:
+    - net-tools

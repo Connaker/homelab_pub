@@ -1,0 +1,59 @@
+---
+- name: Install dependencies
+  apt:
+    name: [unzip, curl]
+    state: present
+    update_cache: yes
+
+- name: Create consul user and directories
+  ansible.builtin.user:
+    name: consul
+    shell: /usr/sbin/nologin
+    system: yes
+    create_home: no
+
+- name: Create necessary directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: consul
+    group: consul
+    mode: '0755'
+  loop:
+    - /etc/consul.d
+    - /opt/consul
+    - /var/log/consul
+
+- name: Download Consul binary
+  get_url:
+    url: "https://releases.hashicorp.com/consul/1.17.0/consul_1.17.0_linux_amd64.zip"
+    dest: /tmp/consul.zip
+    mode: '0644'
+
+- name: Unzip Consul binary
+  unarchive:
+    src: /tmp/consul.zip
+    dest: /usr/local/bin/
+    remote_src: yes
+    mode: '0755'
+
+- name: Copy consul configuration file
+  template:
+    src: consul.hcl.j2
+    dest: /etc/consul.d/consul.hcl
+    owner: consul
+    group: consul
+    mode: '0644'
+
+- name: Copy consul systemd service file
+  copy:
+    src: files/consul.service
+    dest: /etc/systemd/system/consul.service
+    mode: '0644'
+
+- name: Reload systemd and start Consul
+  systemd:
+    name: consul
+    daemon_reload: yes
+    enabled: yes
+    state: started

@@ -1,0 +1,21 @@
+---
+- name: Ensure docker group is created
+  group:
+    name: docker
+    state: present
+
+- name: Ensure current user is added to docker group
+  user:
+    name: "{{ item  }}"
+    groups: docker
+    append: yes
+  loop: "{{ docker_users }}"
+
+
+- name: Create docker user (if not exists)
+  user:
+    name: docker
+    state: present
+    system: yes
+    shell: /bin/false
+    comment: "Docker user for running containers"

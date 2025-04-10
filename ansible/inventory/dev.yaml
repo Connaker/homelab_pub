@@ -1,0 +1,23 @@
+---
+all:
+  children:
+    nomad:
+      children:
+        linux_nomad_sn:
+          hosts:
+            hl1-lnomadsn-01:
+
+        linux_nomad_cn:
+          hosts:
+            hl1-lnomadcn-01:
+
+        windows_nomad_cn:
+          hosts:
+            winnomadcn01:  # <-- Gave the Windows node a proper identifier
+
+    consul:
+      children:
+        linux_consul:
+          hosts:
+            hl1-lconsul-01:
+

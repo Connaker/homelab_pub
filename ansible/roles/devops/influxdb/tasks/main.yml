@@ -1,0 +1,53 @@
+---
+- name: Check if the container is running
+  community.docker.docker_compose_v2:
+    project_src: "{{docker_directory}}/{{influx_directory}}"
+    state: present
+  register: compose_status
+  ignore_errors: yes
+
+- name: Bring container down if running
+  community.docker.docker_compose_v2:
+    project_src: "{{docker_directory}}/{{influx_directory}}"
+    state: absent
+  when: compose_status.failed == false
+
+- name: Create a directory for the docker-compose build
+  ansible.builtin.file:
+    path: { docker_directory }
+    state: directory
+    owner: docker
+    group: docker
+    mode: 0755
+
+- name: Copy secrets from host to server
+  copy:
+    src: "{{ item }}"
+    dest: "{{docker_directory}}/{{influx_directory}}"
+    mode: 0754
+    owner: docker
+    group: docker
+  loop:
+    - ./files/influxdb2-admin-password
+    - ./files/influxdb2-admin-username
+    - ./files/influxdb2-admin-token
+
+- name: Create a docker-compose file
+  ansible.builtin.copy:
+    src: ./files/docker-compose.yml
+    dest: "{{docker_directory}}/{{influx_directory}}/docker-compose.yml"
+    owner: docker
+    group: docker
+    mode: 0754
+
+- name: Run docker-compose file as docker user
+  become: true
+  become_user: docker
+  community.docker.docker_compose_v2:
+    project_src: "{{docker_directory}}/{{influx_directory}}"
+    state: present
+  register: output
+
+# - name: Show output
+#   ansible.builtin.debug:
+#     var: output

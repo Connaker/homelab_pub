@@ -1,0 +1,7 @@
+all:
+  children:
+    devops:
+      children:
+        devops_tools:
+          hosts:
+            hl1-deploy-01:

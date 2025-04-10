@@ -1,0 +1,83 @@
+---
+- name: Ensure dependencies are installed
+  apt:
+    name: [ "curl", "gnupg" ]
+    state: present
+    update_cache: yes
+
+- name: Add HashiCorp GPG key
+  shell: |
+    curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  args:
+    creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+- name: Add HashiCorp repository
+  shell: |
+    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+  args:
+    creates: /etc/apt/sources.list.d/hashicorp.list
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Create consul system user
+  user:
+    name: consul
+    system: yes
+    shell: /bin/false
+    create_home: no
+
+- name: Create consul configuration directory
+  file:
+    path: /etc/consul.d
+    state: directory
+    owner: consul
+    group: consul
+    mode: '0755'
+
+- name: Create consul log directory
+  file:
+    path: /var/log/consul
+    state: directory
+    owner: consul
+    group: consul
+    mode: '0755'
+
+
+- name: Copy consul configuration file
+  copy:
+    src: files/consul.hcl
+    dest: /etc/consul.d/consul.hcl
+    owner: consul
+    group: consul
+    mode: '0644'
+
+- name: Create consul data directory
+  file:
+    path: /opt/consul
+    state: directory
+    owner: consul
+    group: consul
+    mode: '0755'
+
+- name: Copy consul systemd service file
+  copy:
+    src: files/consul.service
+    dest: /etc/systemd/system/consul.service
+    mode: '0644'
+
+- name: Install consul
+  apt:
+    name: consul
+    state: present
+
+- name: Reload systemd daemon to apply changes
+  systemd:
+    daemon_reload: yes
+
+- name: Reload systemd and enable consul service
+  systemd:
+    name: consul
+    enabled: yes
+    state: started

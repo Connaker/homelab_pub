@@ -1,0 +1,10 @@
+datacenter= "dc1"
+data_dir= "/opt/consul"
+
+log_level="DEBUG"
+log_file = "/var/log/consul/consul.log"
+
+enable_script_checks= true
+node_name= "{{ inventory_hostname }}"
+
+retry_join = ["192.168.1.242"]

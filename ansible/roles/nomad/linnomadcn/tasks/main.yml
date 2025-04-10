@@ -1,0 +1,65 @@
+---
+- name: Ensure dependencies are installed
+  apt:
+    name: [ "curl", "gnupg" ]
+    state: present
+    update_cache: yes
+
+- name: Add HashiCorp GPG key
+  shell: |
+    curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  args:
+    creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+- name: Add HashiCorp repository
+  shell: |
+    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+  args:
+    creates: /etc/apt/sources.list.d/hashicorp.list
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install Nomad
+  apt:
+    name: nomad
+    state: present
+
+- name: Create Nomad system user
+  user:
+    name: nomad
+    system: yes
+    shell: /bin/false
+    create_home: no
+
+- name: Create necessary directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: nomad
+    group: nomad
+    mode: '0755'
+  loop: "{{ nomad_directories }}"
+
+
+- name: Copy Nomad configuration file
+  copy:
+    src: files/nomad-client.hcl
+    dest: /etc/nomad.d/nomad.hcl
+    owner: nomad
+    group: nomad
+    mode: '0644'
+
+- name: Copy Nomad systemd service file
+  copy:
+    src: files/nomad.service
+    dest: /etc/systemd/system/nomad.service
+    mode: '0644'
+
+- name: Reload systemd and enable Nomad service
+  systemd:
+    daemon_reload: yes
+    name: nomad
+    enabled: yes
+    state: started

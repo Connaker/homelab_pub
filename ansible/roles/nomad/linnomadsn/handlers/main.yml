@@ -1,0 +1,5 @@
+---
+# handlers file for /mnt/f/projects/homelab2/ansible/roles/linnomadsn
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes

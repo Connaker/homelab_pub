@@ -1,0 +1,103 @@
+---
+- name: Ensure dependencies are installed
+  apt:
+    name: [ "curl", "gnupg" ]
+    state: present
+    update_cache: yes
+
+- name: Add HashiCorp GPG key
+  shell: |
+    curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  args:
+    creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+- name: Add HashiCorp repository
+  shell: |
+    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+  args:
+    creates: /etc/apt/sources.list.d/hashicorp.list
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install Nomad
+  apt:
+    name: nomad
+    state: present
+
+- name: Create Nomad system user
+  user:
+    name: nomad
+    system: yes
+    shell: /bin/false
+    create_home: no
+
+- name: Create Nomad configuration directory
+  file:
+    path: /etc/nomad.d
+    state: directory
+    owner: nomad
+    group: nomad
+    mode: '0755'
+
+- name: Create Nomad log directory
+  file:
+    path: /var/log/nomad
+    state: directory
+    owner: nomad
+    group: nomad
+    mode: '0755'
+
+- name: Copy Nomad configuration file
+  copy:
+    src: files/nomad.hcl
+    dest: /etc/nomad.d/nomad.hcl
+    owner: nomad
+    group: nomad
+    mode: '0644'
+
+- name: Copy Nomad Server configuration file
+  copy:
+    src: files/consul.hcl
+    dest: /etc/nomad.d/server.hcl
+    owner: nomad
+    group: nomad
+    mode: '0644'
+
+- name: Copy Nomad Telemetry configuration file
+  copy:
+    src: files/consul.hcl
+    dest: /etc/nomad.d/telemetry.hcl
+    owner: nomad
+    group: nomad
+    mode: '0644'
+
+- name: Copy Consul Server configuration file
+  copy:
+    src: files/consul.hcl
+    dest: /etc/nomad.d/consul.hcl
+    owner: nomad
+    group: nomad
+    mode: '0644'
+
+- name: Create Nomad data directory
+  file:
+    path: /opt/nomad
+    state: directory
+    owner: nomad
+    group: nomad
+    mode: '0755'
+
+- name: Copy Nomad systemd service file
+  copy:
+    src: files/nomad.service
+    dest: /etc/systemd/system/nomad.service
+    mode: '0644'
+
+- name: Reload systemd and enable Nomad service
+  systemd:
+    daemon_reload: yes
+    name: nomad
+    enabled: yes
+    state: started
