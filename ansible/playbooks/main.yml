@@ -20,13 +20,13 @@
       role: docker/install_docker
       tags: install-docker
 
-    - name: Add Docker Users
-      role: docker/add_users
-      tags: install-docker, add-docker-user
+    # - name: Add Docker Users
+    #   role: docker/add_users
+    #   tags: install-docker, add-docker-user
 
-    - name: Add Networks to Docker
-      role: docker/docker_networks
-      tags: install-docker, docker-networks 
+    # - name: Add Networks to Docker
+    #   role: docker/docker_networks
+    #   tags: install-docker, docker-networks 
 
     # Nomand Server
     - name: Setup Linux Nomad Server Nodes

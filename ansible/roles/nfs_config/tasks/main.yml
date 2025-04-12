@@ -5,153 +5,74 @@
     state: present
     update_cache: yes
 
-# - name: temp mount directory
-#   file:
-#     path: /mnt/storage
-#     state: directory
-#     owner: nobody
-#     group: nogroup
-#     mode: '0775'
+# Mount create storage directory on mount
+- name: Ensure storage for {{ ansible_hostname }} directory exists under /mnt
+  file:
+    path: /mnt/storage
+    state: directory
+    owner: nobody
+    group: nogroup
+    mode: '0777'
 
-# - name: Mount NFS storage as /mnt/storage_pool
-#   ansible.posix.mount:
-#     src: "{{ nfs_server }}:/mnt/storage_pool/
-#     path: "/mnt/storage"
-#     opts: rw,sync,_netdev
-#     state: mounted
-#     fstype: nfs
+- name: Mount NFS storage for {{ ansible_hostname }} as /mnt/storage
+  ansible.posix.mount:
+    src: "{{ nfs_server }}:/mnt/storage_pool/servers/{{ ansible_hostname }}"
+    path: "/mnt/storage"
+    opts: rw,sync,_netdev
+    state: mounted
+    fstype: nfs
 
-# - name: Create {{ ansible_hostname }} directory
-#   file:
-#     path: "/mnt/storage/{{ item }}"
-#     state: directory
-#     owner: root
-#     group: root
-#     mode: '0755'
-#   loop: {{ ansible_hostname }}
-#   become: true 
+- name: Create subdirectories in storage directory
+  file:
+    path: "/mnt/storage/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - home
+    - opt
 
-# - name: Ensure mount {{ ansible_hostname }} directory exists
-#   file:
-#     path: /mnt/{{ ansible_hostname }}
-#     state: directory
-#     owner: nobody
-#     group: nogroup
-#     mode: '0775'
+- name: Sync existing directory contents to storage directory
+  ansible.builtin.command: rsync -aAXv /{{ item.src }}/ /mnt/storage/{{ item.dest }}/
+  loop:
+    - { src: home, dest: home }
+    - { src: opt, dest: opt }
 
-# - name: Mount NFS storage as /mnt/{{ ansible_hostname }}
-#   ansible.posix.mount:
-#     src: "{{ nfs_server }}:/mnt/storage_pool/{{ ansible_hostname }}"
-#     path: "/mnt/{{ ansible_hostname }}"
-#     opts: rw,sync,_netdev
-#     state: mounted
-#     fstype: nfs
+- name: Remove old directories
+  file:
+    path: /{{ item }}
+    state: absent
+  loop:
+    - home
+    - opt
 
-# - name: Create subdirectories in NFS path
-#   file:
-#     path: "/mnt/{{ ansible_hostname }}/{{ item }}"
-#     state: directory
-#     owner: root
-#     group: root
-#     mode: '0755'
-#   loop:
-#     - home
-#     - opt
-#     - var/log
-#   register: directory_results
-#   become: true 
+- name: Recreate directories
+  file:
+    path: /{{ item }}
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - home
+    - opt
 
-# - name: Sync existing directory contents to NFS
-#   ansible.builtin.command: rsync -av --remove-source-files --ignore-missing-args /{{ item.src }}/ /mnt/{{ ansible_hostname }}/{{ item.dest }}/
-#   loop:
-#     - { src: home, dest: home }
-#     - { src: opt, dest: opt }
-#     - { src: var/log, dest: var/log }
+- name: Ensure bind mounts exist for /home and /opt
+  ansible.posix.mount:
+    src: "/mnt/storage/{{ item.src }}"
+    path: "{{ item.dest }}"
+    fstype: none
+    opts: bind
+    state: mounted
+  loop:
+    - { src: home, dest: /home }
+    - { src: opt, dest: /opt }
 
-# - name: Bind mount NFS-backed directories to expected paths
-#   ansible.posix.mount:
-#     src: "/mnt/{{ ansible_hostname }}/{{ item.src }}"
-#     path: "{{ item.dest }}"
-#     fstype: none
-#     opts: bind
-#     state: mounted
-#   loop:
-#     - { src: home, dest: /home }
-#     - { src: opt, dest: /opt }
-#     - { src: var/log, dest: var/log }
-
-# - name: Ensure fstab entries exist for persistence
-#   blockinfile:
-#     path: /etc/fstab
-#     marker: "# {mark} ANSIBLE MANAGED STORAGE MOUNTS"
-#     block: |
-#       {{ nfs_server }}:/mnt/storage_pool /mnt/storage nfs rw,sync,_netdev,noatime 0 0
-#       /mnt/{{ ansible_hostname }}/home /home none bind 0 0
-#       /mnt/{{ ansible_hostname }}/opt /opt none bind 0 0
-#       /mnt/{{ ansible_hostname }}/var/log /var/log none bind 0 0
-
-# - name: Create /docker_volumes directory
-#   file:
-#     path: /docker_volumes
-#     state: directory
-#     owner: root
-#     group: root
-#     mode: '0775'
-#   when: ansible_hostname not in servers
-
-# - name: Bind mount NFS-backed directories to expected paths
-#   ansible.posix.mount:
-#     src: "/mnt/{{ ansible_hostname }}/{{ item.src }}"
-#     path: "{{ item.dest }}"
-#     fstype: none
-#     opts: bind
-#     state: mounted
-#   loop:
-#     - { src: docker_volumes, dest: /docker_volumes }
-#   when: ansible_hostname not in servers
-
-# - name: Ensure fstab entries exist for persistence
-#   blockinfile:
-#     path: /etc/fstab
-#     marker: "# {mark} ANSIBLE MANAGED STORAGE MOUNTS"
-#     block: |
-#       /mnt/{{ ansible_hostname }}/docker_volumes /docker_volumes none bind 0 0
-#   when: ansible_hostname not in servers
-
-# Create volumes directory
-# - name: Ensure dependencies are installed
-#   apt:
-#     name: nfs-common
-#     state: present
-#     update_cache: yes
-
-# - name: Create /docker_volumes directory
-#   file:
-#     path: /docker_volumes
-#     state: directory
-#     owner: root
-#     group: root
-#     mode: '0775'
-
-# - name: Mount docker volumes
-#   ansible.posix.mount:
-#     src: "{{ nfs_server }}:/mnt/storage_pool/{{ ansible_hostname }}/docker_volumes"
-#     path: "/mnt/{{ ansible_hostname }}"
-#     opts: rw,sync,_netdev
-#     state: mounted
-#     fstype: nfs
-
-# - name: Bind mount NFS-backed docker volumes 
-#   ansible.posix.mount:
-#     src: "/mnt/storage_pool/hl1-deploy-01/docker_volumes"
-#     path: "/docker_volumes"
-#     fstype: none
-#     opts: bind
-#     state: mounted
-
-# - name: Ensure fstab entries exist for persistence
-#   blockinfile:
-#     path: /etc/fstab
-#     marker: "# {mark} ANSIBLE MANAGED STORAGE MOUNTS"
-#     block: |
-#       /mnt/storage_pool/{{ ansible_hostname }}/docker_volumes /docker_volumes none bind 0 0
+- name: Ensure fstab entries exist for persistence
+  blockinfile:
+    path: /etc/fstab
+    block: |
+      {{ nfs_server }}:/mnt/storage_pool /mnt/storage nfs rw,sync,_netdev,noatime 0 0
+      /mnt/storage/home /home none bind 0 0
+      /mnt/storage/opt /opt none bind 0 0

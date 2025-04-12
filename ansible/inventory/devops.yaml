@@ -1,7 +1,22 @@
 all:
+
+devops:
   children:
-    devops:
-      children:
-        devops_tools:
-          hosts:
-            hl1-deploy-01:
+    deploymnet:
+      hosts:
+        hl1-deploy-01:
+      vars:
+        docker_users: 
+          - ubuntu
+        networks: 
+          - monit-network
+
+  # children:
+  #   devops:
+  #     children:
+  #       devops_tools:
+  #         hosts:
+  #           hl1-deploy-01:
+  #       vars:
+  #         docker_users: ubuntu
+  #         networks: monit-network

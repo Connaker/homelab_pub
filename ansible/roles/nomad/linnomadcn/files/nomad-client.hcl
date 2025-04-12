@@ -45,7 +45,7 @@ server_join {
 
 
 consul {
-  address = "127.0.0.1:8500:8500"
+  address = "127.0.0.1:8500"
   auto_advertise = true
 
   client_auto_join = true

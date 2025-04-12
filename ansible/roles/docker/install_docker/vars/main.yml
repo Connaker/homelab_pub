@@ -1,0 +1,10 @@
+# networks:
+#   - monit-network
+
+# docker_users:
+#   - ubuntu
+#   - nomad
+#   - harbor
+
+# servers:
+#   - hl1-lnomadcn-01

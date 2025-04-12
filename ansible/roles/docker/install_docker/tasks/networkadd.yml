@@ -1,0 +1,7 @@
+---
+- name: Create docker networks and attach to bridge
+  community.docker.docker_network:
+    name: "{{ item }}"
+    driver: bridge
+    state: present
+  loop: "{{ networks }}"

@@ -1,0 +1,67 @@
+---
+
+#Verify if /docker exist
+# - name: Check if /docker exists on storage
+#   stat:
+#     path: /mnt/storage/docker
+#   register: docker_vol_check
+
+
+# # Create and mount docker new data directory
+# - name: Create Docker data directory on storage 
+#   file:
+#     path: "/mnt/storage/docker"
+#     state: directory
+#     owner: root
+#     group: root
+#     mode: '0755'
+#   when: not docker_vol_check.stat.exists
+
+# # Migrate Docker data directory to new location
+# - name: Stop Docker daemon
+#   service:
+#     name: docker
+#     state: stopped
+
+# - name: Migrate Docker directory to new Docker directory on storage
+#   ansible.builtin.command: "rsync -aAXv /var/lib/docker/ /mnt/storage/docker/"
+
+# - name: Remove old Docker data dir
+#   file:
+#     path: /var/lib/docker
+#     state: absent
+
+# - name: Recreate Docker directory
+#   file:
+#     path: /var/lib/docker
+#     state: directory
+#     owner: root
+#     group: root
+#     mode: '0755'
+
+- name: Bind mount docker directory
+  ansible.posix.mount:
+    src: "/mnt/storage/docker"
+    path: "/var/lib/docker"
+    fstype: none
+    opts: bind
+    state: mounted
+  #when: not docker_vol_check.stat.exists
+
+# Update fstab
+# - name: Ensure fstab entry exists for /mnt/storage/docker
+#   blockinfile:
+#     path: /etc/fstab
+#     block: |
+#       /mnt/storage/docker /var/lib/docker/ none bind 0 0
+#   #when: not docker_vol_check.stat.exists
+
+# - name: Start Docker service
+#   service:
+#     name: docker
+#     state: started
+
+
+
+
+  
