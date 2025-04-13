@@ -76,3 +76,47 @@
       {{ nfs_server }}:/mnt/storage_pool /mnt/storage nfs rw,sync,_netdev,noatime 0 0
       /mnt/storage/home /home none bind 0 0
       /mnt/storage/opt /opt none bind 0 0
+
+# For servers using Docker, add move Docker to storage and Bind /var/lib/docker
+
+# Create and mount docker new data directory
+- name: Create Docker data directory on storage 
+  file:
+    path: "/mnt/storage/docker"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: docker
+
+# Prep for Docker installation for servers requiring Docker
+
+- name: Create Docker directory
+  file:
+    path: /var/lib/docker
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: docker
+
+- name: Bind mount docker directory
+  ansible.posix.mount:
+    src: "/mnt/storage/docker"
+    path: "/var/lib/docker"
+    fstype: none
+    opts: bind
+    state: mounted
+  when: docker
+
+# Update fstab
+- name: Ensure fstab entry exists for /mnt/storage/docker
+  blockinfile:
+    path: /etc/fstab
+    block: |
+      /mnt/storage/docker /var/lib/docker/ none bind 0 0
+  when: docker
+
+
+
+  

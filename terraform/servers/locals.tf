@@ -99,7 +99,6 @@ locals {
       ipconfig1                     = "10.10.10.5"
       disks_scsi_scsi0_disks_size   = "80G"
     }
-
     deploy ={
       vmid                          = 400
       name                          = "hl1-deploy-01"
