@@ -8,42 +8,42 @@
 
     # Configuration and Management
     - name: Patch Linux Servers
-      role: os_updates/linux
+      role: linux/os_updates/linux
       tags: patch
 
     - name: Setup NFS on Server
-      role: nfs_config
+      role: linux/nfs_config
       tags: nfs-config
 
     # Docker Stuff
     - name: Install Docker
-      role: docker/install_docker
+      role: linux/docker/install_docker
       tags: install-docker
 
     # - name: Add Docker Users
-    #   role: docker/add_users
-    #   tags: install-docker, add-docker-user
+    #   role: linux/docker/sub_roles/add_users
+    #   tags: docker-user
 
     # - name: Add Networks to Docker
-    #   role: docker/docker_networks
-    #   tags: install-docker, docker-networks 
+    #   role: linux/docker/sub_roles/docker_networks
+    #   tags: docker-networks 
 
     # Nomand Server
     - name: Setup Linux Nomad Server Nodes
-      role: nomad/linnomadsn
+      role: linux/nomad/server_node
       tags: linnomadsn
     
     - name: Setup Linux Nomad Client Nodes
-      role: nomad/linnomadcn
+      role: linux/nomad/client_node
       tags: linnomadcn
 
     # Consul Configurations
     - name: Setup Linux Consul server
-      role: consul/consul_server/linux
+      role: linux/consul/consul_server
       tags: linconsul_server
 
     - name: Setup Linux Consul Agent 
-      role: consul/consul_agent/linux
+      role: linux/consul/consul_agent
       tags: linconsul_agent
     
     # Monitoring Tools

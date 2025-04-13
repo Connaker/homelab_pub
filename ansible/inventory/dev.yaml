@@ -1,19 +1,26 @@
 ---
 all:
+
+nomad:
   children:
-    nomad:
-      children:
-        linux_nomad_sn:
-          hosts:
-            hl1-lnomadsn-01:
+    linux_nomad_sn:
+      hosts:
+        hl1-lnomadsn-01:
+      vars:
+        nomad: true
 
-        linux_nomad_cn:
-          hosts:
-            hl1-lnomadcn-01:
+    linux_nomad_cn:
+      hosts:
+        hl1-lnomadcn-01:
+      vars:
+        docker_users: 
+          - nomad
+        docker: true
+        nomad: true
 
-        windows_nomad_cn:
-          hosts:
-            winnomadcn01:  # <-- Gave the Windows node a proper identifier
+    windows_nomad_cn:
+      hosts:
+        winnomadcn01:  # <-- Gave the Windows node a proper identifier
 
     consul:
       children:
