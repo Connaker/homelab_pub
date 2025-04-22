@@ -1,6 +1,4 @@
 ---
 nfs_server: 10.10.10.2
-nfs_path: /mnt/storage/
-servers:
-  - 'hl1-linnomadsn-01'
-  - 'hl1-linconsul-01'
+nfs_path: /mnt/storage_pool
+mount_path: /mnt/storage

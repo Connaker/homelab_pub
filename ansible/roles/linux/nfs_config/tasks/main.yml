@@ -8,7 +8,7 @@
 # Mount create storage directory on mount
 - name: Ensure storage for {{ ansible_hostname }} directory exists under /mnt
   file:
-    path: /mnt/storage
+    path: "{{ mount_path }}"
     state: directory
     owner: nobody
     group: nogroup
@@ -16,15 +16,15 @@
 
 - name: Mount NFS storage for {{ ansible_hostname }} as /mnt/storage
   ansible.posix.mount:
-    src: "{{ nfs_server }}:/mnt/storage_pool/servers/{{ ansible_hostname }}"
-    path: "/mnt/storage"
+    src: "{{ nfs_server }}:{{ nfs_path }}/servers/{{ ansible_hostname }}"
+    path: "{{ mount_path }}"
     opts: rw,sync,_netdev
     state: mounted
     fstype: nfs
 
 - name: Create subdirectories in storage directory
   file:
-    path: "/mnt/storage/{{ item }}"
+    path: "{{ mount_path }}/{{ item }}"
     state: directory
     owner: root
     group: root
@@ -32,9 +32,10 @@
   loop:
     - home
     - opt
+    - var/log
 
 - name: Sync existing directory contents to storage directory
-  ansible.builtin.command: rsync -aAXv /{{ item.src }}/ /mnt/storage/{{ item.dest }}/
+  ansible.builtin.command: rsync -aAXv /{{ item.src }}/ {{ mount_path }}/{{ item.dest }}/
   loop:
     - { src: home, dest: home }
     - { src: opt, dest: opt }
@@ -60,7 +61,7 @@
 
 - name: Ensure bind mounts exist for /home and /opt
   ansible.posix.mount:
-    src: "/mnt/storage/{{ item.src }}"
+    src: "{{ mount_path }}/{{ item.src }}"
     path: "{{ item.dest }}"
     fstype: none
     opts: bind
@@ -73,14 +74,29 @@
   blockinfile:
     path: /etc/fstab
     block: |
-      {{ nfs_server }}:/mnt/storage_pool /mnt/storage nfs rw,sync,_netdev,noatime 0 0
-      /mnt/storage/home /home none bind 0 0
-      /mnt/storage/opt /opt none bind 0 0
+      {{ nfs_server }}:{{ nfs_path }} {{ mount_path }} nfs rw,sync,_netdev,noatime 0 0
+      {{ mount_path }}/home /home none bind 0 0
+      {{ mount_path }}/opt /opt none bind 0 0
 
-- name: Create Docker directory
-  include_tasks: docker.yml
-  when: docker
+- name: Extra directory creations for Nomad Clients
+  include_tasks: nomad_client.yml
+  when: nomad_client
 
-- name: Create Nomad directories
-  include_tasks: nomad.yml
-  when: noamd
+
+
+# - name: Create Docker directory
+#   include_tasks: docker.yml
+#   when: 
+#     - nomad or docker
+
+# - name: Create Nomad directories
+#   include_tasks: nomad.yml
+#   when: nomad
+
+# - name: Create Consul Server directories
+#   include_task: consul_server.yml
+#   when: consul_server
+
+# - name: Create Consul Agent directories
+#   include_task: consul_agent.yml
+#   when: consul_agent or nomad

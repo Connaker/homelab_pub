@@ -15,8 +15,8 @@ nomad:
       vars:
         docker_users: 
           - nomad
-        docker: true
-        nomad: true
+        nomad_client: true
+        docker_networks: false
 
     windows_nomad_cn:
       hosts:
@@ -27,4 +27,6 @@ nomad:
         linux_consul:
           hosts:
             hl1-lconsul-01:
+          vars:
+            consul: true
 

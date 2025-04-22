@@ -11,3 +11,4 @@ devops:
         networks: 
           - monit-network
         docker: true
+        docker_networks: true 

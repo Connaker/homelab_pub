@@ -5,3 +5,4 @@
     driver: bridge
     state: present
   loop: "{{ networks }}"
+  when: docker_networks

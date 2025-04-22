@@ -1,8 +1,0 @@
-#!/bin/bash
-
-set -e
-
-{% for item in rsync_dirs %}
-echo "Syncing /{{ item.src }}/ to /mnt/storage/devops_server/{{ item.dest }}/"
-rsync -aAX --no-owner --delete /{{ item.src }}/ /mnt/storage/devops_server/{{ item.dest }}/
-{% endfor %}

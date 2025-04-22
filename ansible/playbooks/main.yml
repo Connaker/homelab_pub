@@ -8,7 +8,7 @@
 
     # Configuration and Management
     - name: Patch Linux Servers
-      role: linux/os_updates/linux
+      role: linux/os_updates
       tags: patch
 
     - name: Setup NFS on Server
@@ -31,11 +31,11 @@
     # Nomand Server
     - name: Setup Linux Nomad Server Nodes
       role: linux/nomad/server_node
-      tags: linnomadsn
+      tags: linnomad_server
     
     - name: Setup Linux Nomad Client Nodes
       role: linux/nomad/client_node
-      tags: linnomadcn
+      tags: linnomad_client
 
     # Consul Configurations
     - name: Setup Linux Consul server
@@ -46,12 +46,12 @@
       role: linux/consul/consul_agent
       tags: linconsul_agent
     
-    # Monitoring Tools
-    - name: Setup Influx
-      role: devops/influxdb
-      tags: influxdb
+    # # Monitoring Tools
+    # - name: Setup Influx
+    #   role: devops/influxdb
+    #   tags: influxdb
 
-    # Registry
-    - name: Setup Harbor
-      role: devops/harbor
-      tags: harbor
+    # # Registry
+    # - name: Setup Harbor
+    #   role: devops/harbor
+    #   tags: harbor

@@ -1,0 +1,83 @@
+---
+
+# Create and Mount Nomad, Consul Agent and Docker Directories for Nomad Client
+
+
+
+# Create Required Directories for Nomad and Consul Agent
+- name: Create directories on storage
+  file:
+    path: "/mnt/storage/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /etc/nomad.d
+    - /etc/consul.d
+    - /var/log/nomad/
+    - /var/log/consul/
+
+- name: Create directories on server
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /etc/nomad.d
+    - /etc/consul.d
+    - /var/log/nomad/
+    - /var/log/consul/
+
+- name: Bind mount directories
+  ansible.posix.mount:
+    src: "/mnt/storage/{{ item.src }}"
+    path: "{{ item.dest }}"
+    fstype: none
+    opts: bind
+    state: mounted
+  loop:
+    - { src: /etc/nomad.d, dest: /etc/nomad.d }
+    - { src: /etc/consul.d, dest: /etc/consul.d }
+    - { src: /var/log/nomad/, dest: /var/log/nomad/ }
+    - { src: /var/log/consul/, dest: /var/log/consul/ }
+
+# Create and mount docker new data directory
+- name: Create Docker directory on storage 
+  file:
+    path: "/mnt/storage/docker"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+
+# Prep for Docker installation for servers requiring Docker
+- name: Create Docker directory on server
+  file:
+    path: /var/lib/docker
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Bind mount docker directory
+  ansible.posix.mount:
+    src: "/mnt/storage/docker"
+    path: "/var/lib/docker"
+    fstype: none
+    opts: bind
+    state: mounted
+
+# Update fstab
+- name: Ensure fstab entry exists for /mnt/storage/nomad
+  blockinfile:
+    path: /etc/fstab
+    block: |
+      /mnt/storage/etc/nomad.d /etc/nomad.d/ none bind 0 0
+      /mnt/storage/etc/consul.d /etc/consul.d/ none bind 0 0
+      /mnt/storage/var/log/nomad/ /var/log/nomad/ none bind 0 0
+      /mnt/storage/var/log/consul/ /var/log/consul/ none bind 0 0
+      /mnt/storage/docker /var/lib/docker/ none bind 0 0
